@@ -1,7 +1,7 @@
 package service
 
 import (
-	domain "_/C_/GOPATH/Http/echo-server"
+	"github.com/SephirothGit/Backend-service/internal/domain"
 	"context"
 )
 

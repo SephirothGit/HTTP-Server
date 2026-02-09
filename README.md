@@ -11,7 +11,7 @@ HTTP backend на Go для управления заказами.
 
 ```bash
 go mod tidy
-go run .
+go run ./cmd/app
 
 Сервер стартует на :8080
 
