@@ -1,37 +1,62 @@
-# Order Service
+# Backend Service (Order Management)
 
-HTTP backend на Go для управления заказами.
+Simple HTTP service for managing order status with clean architecture principles.
 
-Проект для практики:
-- layered architecture (handler / service / repository / domain)
-- REST handlers
-- middleware
-- context usage
-- error mapping
+## Features
+
+- Layered architecture (domain / service / repository / handler)
+- In-memory repository implementation
+- Status transition validation
+- Graceful shutdown
+- Logging middleware
+- Clean and extensible structure
+
+## Architecture
+
+cmd/app – application entrypoint
+internal/domain – business logic & rules
+internal/service – use cases
+internal/repository – data persistence
+internal/handler – HTTP transport layer
+internal/server – server, router, middleware
+
+
+## Getting Started
+
+### Run locally
 
 ```bash
-go mod tidy
 go run ./cmd/app
+```
 
-Сервер стартует на :8080
+Server starts on:
+http://localhost:8080
 
-Endpoints:
+## API
 
 Update order status
 PUT /orders/{id}
+Body:
 
-Responses:
+{
+  "status": "paid"
+}
+## Possible statuses:
 
-204 — success
-400 — invalid input
-404 — order not found
-409 — invalid status transition
-500 — internal error
+created
 
-Architecture:
+paid
 
-handler   → HTTP layer
-service   → business logic
-repository→ data storage
-domain    → entities + rules
-server    → router + middleware + http.Server
+shipped
+
+canceled
+
+## Design Principles
+
+Separation of concerns
+
+Dependency inversion
+
+Explicit interfaces
+
+Domain-driven mindset
