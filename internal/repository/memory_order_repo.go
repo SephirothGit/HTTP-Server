@@ -26,13 +26,23 @@ func (r *InMemoryOrderRepository) GetByID(ctx context.Context, id string) (*doma
 	if !ok {
 		return nil, domain.ErrOrderNotFound
 	}
-	return o, nil
+
+	// Copy for optimistic locking
+	copy := *o
+	return &copy, nil
 }
 
 func (r *InMemoryOrderRepository) Save(ctx context.Context, order *domain.Order) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.orders[order.ID] = order
+	existing, ok := r.orders[order.ID]
+
+	if ok && existing.Version >= order.Version {
+		return domain.ErrVersionConflict
+	}
+	copy := *order
+	r.orders[order.ID] = &copy
+
 	return nil
 }
