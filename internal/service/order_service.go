@@ -50,7 +50,12 @@ func (s *orderService) UpdateStatus(
 
 	order, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return domain.ErrOrderNotFound
+	}
+
+	// Idempotency
+	if domain.IsSameStatus(order.Status, status) {
+		return nil
 	}
 
 	// Domain logic inside entity

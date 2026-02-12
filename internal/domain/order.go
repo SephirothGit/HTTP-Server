@@ -11,6 +11,13 @@ var (
 	ErrInvalidTransition = errors.New("Invalid status transition")
 	ErrVersionConflict   = errors.New("Version conflict")
 )
+// Domain entity
+type Order struct {
+	ID      string
+	Status  string
+	Version int
+	events []Event
+}
 
 // Statuses
 const (
@@ -38,50 +45,57 @@ var ValidTransitions = map[string]map[string]bool{
 type Event interface {
 	EventName() string
 }
-
 type OrderStatusChanged struct {
 	OrderID string
 	From    string
 	To      string
 	At      time.Time
 }
-
-func (e OrderStatusChanged) EventName() string {
-	return "order.status_changed"
+// Checks if status change allowed
+func CanTransition(from, to string) bool {
+	next, ok := ValidTransitions[from]
+	if !ok {
+		return false
+	}
+	return next[to]
 }
 
-// Entity
-type Order struct {
-	ID      string
-	Status  string
-	Version int
-
-	events []Event
+// Checks if the order already have the given status
+func IsSameStatus(current, new string) bool {
+	return current == new
 }
 
-// Behavior
+
 func (o *Order) ChangeStatus(newStatus string) error {
-	if o.Status == newStatus {
+
+	// Idempotency check
+	if IsSameStatus(o.Status, newStatus) {
 		return nil
 	}
 
-	next, ok := ValidTransitions[o.Status]
-	if !ok || !next[newStatus] {
-		return nil
+	// Valid transition check
+	if !CanTransition(o.Status, newStatus) {
+		return ErrInvalidTransition
 	}
 
-	old := o.Status
+	// Update status
+	from := o.Status
 	o.Status = newStatus
 	o.Version++
 
+	// Record a domain event
 	o.events = append(o.events, OrderStatusChanged{
 		OrderID: o.ID,
-		From:    old,
-		To:      newStatus,
-		At:      time.Now(),
+		From: from,
+		To: newStatus,
+		At: time.Now(),
 	})
 
 	return nil
+}
+
+func (e OrderStatusChanged) EventName() string {
+	return "order.status_changed"
 }
 
 func (o *Order) PullEvents() []Event {
