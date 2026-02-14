@@ -5,6 +5,7 @@ Simple HTTP service for managing order status with clean architecture principles
 ## Features
 
 - Layered architecture (domain / service / repository / handler)
+- API versioning
 - In-memory repository implementation
 - Status transition validation
 - Graceful shutdown
@@ -34,13 +35,21 @@ http://localhost:8080
 
 ## API
 
-Update order status
-PUT /orders/{id}
-Body:
+### Update order status
+PUT /api/v1/orders/{id}
 
+Body:
 {
   "status": "paid"
 }
+
+### Health check
+GET /health
+
+Response:
+200 OK
+"ok"
+
 ## Possible statuses:
 
 created
