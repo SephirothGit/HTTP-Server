@@ -19,7 +19,9 @@ func main() {
 	svc := service.NewOrderService(repo)
 	orderHandler := handler.NewOrderHandler(svc)
 
-	router := server.NewRouter(orderHandler)
+	router := server.NewRouter(server.RouterDeps{
+		OrderHandler: orderHandler,
+	})
 	wrapped := server.LoggingMiddleware(router)
 
 	srv := server.NewServer(":8080", wrapped)
