@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/SephirothGit/Backend-service/internal/handler"
@@ -27,16 +28,16 @@ func main() {
 	srv := server.NewServer(":8080", wrapped)
 
 	go func() {
+		log.Println("Server started on :8080")
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed %v", err)
 		}
 	}()
 
-	log.Println("Server started on :8080")
-
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
+	log.Println("Shutdown signal received")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -45,5 +46,5 @@ func main() {
 		log.Fatalf("Server shutdown failed %v", err)
 	}
 
-	log.Println("Server stopped")
+	log.Println("Server stopped gracefully")
 }
