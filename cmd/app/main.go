@@ -25,7 +25,13 @@ func main() {
 	})
 	wrapped := server.LoggingMiddleware(router)
 
-	srv := server.NewServer(":8080", wrapped)
+	srv := server.NewServer(server.Config{
+		Addr: ":8080",
+		ReadTimeout: 5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout: 60 * time.Second,
+		ReadHeaderTimeout: 2 * time.Second,
+	}, wrapped)
 
 	go func() {
 		log.Println("Server started on :8080")
