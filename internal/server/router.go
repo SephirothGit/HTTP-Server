@@ -17,9 +17,14 @@ type statusRecorder struct {
 func NewRouter(deps RouterDeps) http.Handler {
 	mux := http.NewServeMux()
 
-	// API v1
 	v1 := http.NewServeMux()
-	v1.Handle("/orders/", deps.OrderHandler)
+
+	// Orders route with method guard
+	v1.Handle("/orders/", methodGuard(
+		http.MethodPut,
+		deps.OrderHandler,
+	))
+
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
 
 	// System routes
@@ -63,4 +68,20 @@ func writeJSON404(w http.ResponseWriter) {
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"error": "route not found",
 	})
+}
+
+func methodGuard(method string, h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"error": "method not allowed",
+			})
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	}
 }
