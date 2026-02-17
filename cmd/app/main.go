@@ -23,7 +23,7 @@ func main() {
 	router := server.NewRouter(server.RouterDeps{
 		OrderHandler: orderHandler,
 	})
-	wrapped := server.LoggingMiddleware(router)
+	wrapped := server.LoggingMiddleware(server.TimeoutMiddleware(5 * time.Second)(router))
 
 	srv := server.NewServer(server.Config{
 		Addr: ":8080",

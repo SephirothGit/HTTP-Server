@@ -31,7 +31,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/ready", readinessHandler)
 
-	return notFoundMiddleware(mux)
+	return notFound(mux)
 }
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
@@ -44,7 +44,7 @@ func readinessHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("ready"))
 }
 
-func notFoundMiddleware(next http.Handler) http.Handler {
+func notFound(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r * http.Request){
 		rw := &statusRecorder{ResponseWriter: w, status: 200}
 
