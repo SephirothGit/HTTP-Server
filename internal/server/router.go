@@ -1,87 +1,65 @@
 package server
 
 import (
-	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"net/http"
+	"encoding/json"
+	"time"
+	"context"
 )
 
 type RouterDeps struct {
 	OrderHandler http.HandlerFunc
 }
 
-type statusRecorder struct {
-	http.ResponseWriter
-	status int
-}
-
 func NewRouter(deps RouterDeps) http.Handler {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	v1 := http.NewServeMux()
-
-	// Orders route with method guard
-	v1.Handle("/orders/", methodGuard(
-		http.MethodPut,
-		deps.OrderHandler,
-	))
-
-	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", v1))
+	// Middleware stack
+	r.Use(LoggingMiddleware)
+	r.Use(TimeoutMiddleware(5 * time.Second))
 
 	// System routes
-	mux.HandleFunc("/health", healthHandler)
-	mux.HandleFunc("/ready", readinessHandler)
+	r.Get("/health", healthHandler)
+	r.Get("/ready", readinessHandler)
 
-	return notFound(mux)
+	// API v1
+	r.Route("/api/v1", func(r chi.Router){
+		r.Put("/orders/{id}", deps.OrderHandler)
+	})
+
+	// Custom error 404
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request){
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	})
+
+	return r
 }
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("ok"))
+
+	func readinessHandler(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ready"))
+	}
 }
 
-func readinessHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ready"))
-}
-
-func notFound(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r * http.Request){
-		rw := &statusRecorder{ResponseWriter: w, status: 200}
-
-		next.ServeHTTP(rw, r)
-
-		if rw.status == http.StatusNotFound {
-			writeJSON404(w)
-		}
-	})
-}
-
-func (r *statusRecorder) WriteHeader(code int) {
-	r.status = code
-	r.ResponseWriter.WriteHeader(code)
-}
-
-func writeJSON404(w http.ResponseWriter) {
+writeJSONError(w http.ResponseWriter, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotFound)
-
+	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(map[string]string{
-		"error": "route not found",
+		"error": msg,
 	})
 }
 
-func methodGuard(method string, h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != method {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusMethodNotAllowed)
-
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"error": "method not allowed",
-			})
-			return
-		}
-
-		h.ServeHTTP(w, r)
+func TimeoutMiddleware(timeout time.duration) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r * http.Request) {
+			ctx, cancel := context.WithTiemout(r.Context(), timeout)
+			defer cancel
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }

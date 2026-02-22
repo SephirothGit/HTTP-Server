@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/SephirothGit/Backend-service/internal/domain"
 	"github.com/SephirothGit/Backend-service/internal/service"
+	"github.com/go-chi/chi/v5"
 )
 
 type OrderHandler struct {
@@ -25,13 +25,11 @@ func (h *OrderHandler) updateOrderStatus(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 {
+	id := chi.URLParam(r, "id")
+	if id == "" {
 		http.Error(w, "invalid path", http.StatusBadRequest)
 		return
 	}
-
-	id := parts[2]
 
 	var req struct {
 		Status string `json:"status"`
