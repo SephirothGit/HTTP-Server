@@ -16,6 +16,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 	r := chi.NewRouter()
 
 	// Middleware stack
+	r.Use(RequestIDMiddleware)
 	r.Use(LoggingMiddleware)
 	r.Use(RecoveryMiddleware)
 	r.Use(TimeoutMiddleware(5 * time.Second))
