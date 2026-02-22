@@ -33,6 +33,11 @@ func main() {
 		ReadHeaderTimeout: 2 * time.Second,
 	}, wrapped)
 
+	if err := server.InitLogger(); err != nil {
+		log.Fatalf("failed to init logger: %v", err)
+	}
+	defer server.Log.Sync()
+
 	go func() {
 		log.Println("Server started on :8080")
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
