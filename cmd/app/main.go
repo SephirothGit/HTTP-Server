@@ -30,6 +30,7 @@ func main() {
 		OrderHandler: orderHandler,
 	})
 	wrapped := server.LoggingMiddleware(server.TimeoutMiddleware(5 * time.Second)(router))
+	wrapped = server.Timeout504Middleware(wrapped)
 
 	srv := server.NewServer(server.Config{
 		Addr: ":8080",
