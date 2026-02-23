@@ -13,13 +13,16 @@ type RouterDeps struct {
 }
 
 func NewRouter(deps RouterDeps) http.Handler {
+
 	r := chi.NewRouter()
+	limiter := NewRateLimiter(10, time.Minute)
 
 	// Middleware stack
 	r.Use(RequestIDMiddleware)
 	r.Use(LoggingMiddleware)
 	r.Use(RecoveryMiddleware)
 	r.Use(TimeoutMiddleware(5 * time.Second))
+	r.Use(limiter.Middleware)
 
 	// System routes
 	r.Get("/health", healthHandler)
@@ -31,7 +34,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 	})
 
 	// Custom error 404
-	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusNotFound, "route not found")
 	})
 
