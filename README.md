@@ -1,71 +1,332 @@
-# Backend Service (Order Management)
+# Backend Order Service
 
-Simple HTTP service for managing order status with clean architecture principles.
+Production-style Go backend service implementing order status management with clean architecture principles.
 
 ## Features
 
-- Layered architecture (domain / service / repository / handler)
-- API versioning
-- In-memory repository implementation
-- Status transition validation
-- Graceful shutdown
-- Logging middleware
-- Clean and extensible structure
+* REST API
+* Clean Architecture (handler → service → domain → repository)
+* Graceful shutdown
+* JWT authentication
+* Request logging (zap)
+* Request ID middleware
+* Rate limiting
+* Timeout handling
+* Custom error responses
+* Health & readiness probes
+* API versioning
+* Optimistic locking (Version field)
+* Domain events
+
+---
 
 ## Architecture
 
-cmd/app – application entrypoint
-internal/domain – business logic & rules
-internal/service – use cases
-internal/repository – data persistence
-internal/handler – HTTP transport layer
-internal/server – server, router, middleware
+```
+Client
+   ↓
+Router (chi)
+   ↓
+Middleware
+   ↓
+Handler
+   ↓
+Service
+   ↓
+Domain
+   ↓
+Repository
+```
 
+Project structure:
 
-## Getting Started
+```
+cmd/
+   main.go
 
-### Run locally
+internal/
+   domain/
+   handler/
+   repository/
+   server/
+   service/
+```
 
-```bash
-go run ./cmd/app
+---
+
+## Run
+
+### 1. Install dependencies
+
+```
+go mod tidy
+```
+
+### 2. Run server
+
+```
+go run ./cmd
 ```
 
 Server starts on:
+
+```
 http://localhost:8080
+```
+
+---
 
 ## API
 
 ### Update order status
+
+```
 PUT /api/v1/orders/{id}
+```
 
 Body:
+
+```
 {
   "status": "paid"
 }
+```
 
-### Health check
+Headers:
+
+```
+Authorization: Bearer <JWT_TOKEN>
+Content-Type: application/json
+```
+
+Example:
+
+```
+curl -X PUT http://localhost:8080/api/v1/orders/123 \
+-H "Authorization: Bearer TOKEN" \
+-H "Content-Type: application/json" \
+-d '{"status":"paid"}'
+```
+
+---
+
+## JWT Token
+
+Example token generation:
+
+```
+go run ./cmd/token
+```
+
+Or generate manually:
+
+```
+user_id = 123
+secret = supersecretkey
+```
+
+---
+
+## Health Checks
+
+### Liveness probe
+
+```
 GET /health
+```
 
 Response:
-200 OK
-"ok"
 
-## Possible statuses:
+```
+ok
+```
 
+### Readiness probe
+
+```
+GET /ready
+```
+
+Response:
+
+```
+ready
+```
+
+---
+
+## Middleware
+
+### Request Logging
+
+Logs include:
+
+* request_id
+* method
+* path
+* status
+* duration
+
+Example:
+
+```
+INFO request completed
+method=PUT
+path=/api/v1/orders/123
+status=204
+duration=5ms
+request_id=abc123
+```
+
+---
+
+### Timeout
+
+Default timeout:
+
+```
+5 seconds
+```
+
+Long requests return:
+
+```
+504 Gateway Timeout
+```
+
+---
+
+### Rate Limiting
+
+Default:
+
+```
+10 requests per minute per IP
+```
+
+Response:
+
+```
+429 Too Many Requests
+```
+
+---
+
+### Authentication
+
+JWT authentication required for API endpoints.
+
+Header:
+
+```
+Authorization: Bearer <token>
+```
+
+Response on failure:
+
+```
+401 Unauthorized
+```
+
+---
+
+## Error Model
+
+Example error:
+
+```
+{
+  "error": "order not found"
+}
+```
+
+HTTP Codes:
+
+| Code | Meaning            |
+| ---- | ------------------ |
+| 400  | Bad request        |
+| 401  | Unauthorized       |
+| 404  | Not found          |
+| 405  | Method not allowed |
+| 409  | Conflict           |
+| 429  | Rate limit         |
+| 500  | Internal error     |
+| 504  | Timeout            |
+
+---
+
+## Domain Model
+
+Order:
+
+```
+ID
+Status
+Version
+```
+
+Statuses:
+
+```
 created
-
 paid
-
 shipped
-
 canceled
+```
 
-## Design Principles
+Valid transitions:
 
-Separation of concerns
+```
+created → paid
+created → canceled
+paid → shipped
+paid → canceled
+```
 
-Dependency inversion
+---
 
-Explicit interfaces
+## Graceful Shutdown
 
-Domain-driven mindset
+The server handles:
+
+* SIGINT
+* SIGTERM
+
+Shutdown timeout:
+
+```
+5 seconds
+```
+
+---
+
+## Production Practices
+
+This project demonstrates:
+
+* Dependency Injection
+* Domain-driven design basics
+* Middleware architecture
+* Structured logging
+* Context propagation
+* API versioning
+* Concurrency-safe repository
+* Idempotent operations
+
+---
+
+## Future Improvements
+
+* PostgreSQL repository
+* Transactions
+* Outbox pattern
+* Metrics (Prometheus)
+* OpenAPI documentation
+* Docker support
+* Integration tests
+
+---
+
+## Author
+
+Self-taught backend engineer building production-grade Go services.
