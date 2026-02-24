@@ -33,6 +33,12 @@ func NewRouter(deps RouterDeps) http.Handler {
 		r.Put("/orders/{id}", deps.OrderHandler)
 	})
 
+	// JWT
+	r.Route("/api/v1", func(r chi.Router){
+		r.Use(JWTAuthMiddleware("supersecretkey"))
+		r.Put("/orders/{id}", deps.OrderHandler)
+	})
+
 	// Custom error 404
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusNotFound, "route not found")

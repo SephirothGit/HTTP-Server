@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"fmt"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/SephirothGit/Backend-service/internal/handler"
 	"github.com/SephirothGit/Backend-service/internal/repository"
@@ -58,6 +60,17 @@ func main() {
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server shutdown failed %v", err)
+	}
+
+	// JWT
+	func generateToken() {
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"user_id": "123",
+			"exp": time.Now.Add(time.Hour).Unix(),
+		})
+
+		tokenStr, _ := token.SignedString([]byte("supersecretkey"))
+		fmt.Println(tokenStr)
 	}
 
 	log.Println("Server stopped gracefully")
