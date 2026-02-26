@@ -10,6 +10,7 @@ Production-style Go backend service implementing order status management with cl
 * JWT authentication
 * Request logging (zap)
 * Request ID middleware
+* Prometheus metrics
 * Rate limiting
 * Timeout handling
 * Custom error responses
@@ -180,6 +181,28 @@ request_id=abc123
 
 ---
 
+## Metrics
+
+Prometheus metrics endpoint:
+
+GET /metrics
+
+Example metrics:
+
+http_requests_total
+
+http_errors_total
+
+http_request_duration_seconds
+
+Used for monitoring:
+
+- request count
+- error rate
+- request latency
+
+---
+
 ### Timeout
 
 Default timeout:
@@ -320,7 +343,6 @@ This project demonstrates:
 * PostgreSQL repository
 * Transactions
 * Outbox pattern
-* Metrics (Prometheus)
 * OpenAPI documentation
 * Docker support
 * Integration tests
@@ -329,4 +351,4 @@ This project demonstrates:
 
 ## Author
 
-Self-taught backend engineer building production-grade Go services.
+SephirothGit
