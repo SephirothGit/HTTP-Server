@@ -22,11 +22,13 @@ func NewRouter(deps RouterDeps) http.Handler {
 	r.Use(LoggingMiddleware)
 	r.Use(RecoveryMiddleware)
 	r.Use(TimeoutMiddleware(5 * time.Second))
+	r.Use(MetricsMiddleware)
 	r.Use(limiter.Middleware)
 
 	// System routes
 	r.Get("/health", healthHandler)
 	r.Get("/ready", readinessHandler)
+	r.Handle("/metrics", MetricsHandler())
 
 	// API v1
 	r.Route("/api/v1", func(r chi.Router) {
@@ -34,7 +36,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 	})
 
 	// JWT
-	r.Route("/api/v1", func(r chi.Router){
+	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(JWTAuthMiddleware("supersecretkey"))
 		r.Put("/orders/{id}", deps.OrderHandler)
 	})

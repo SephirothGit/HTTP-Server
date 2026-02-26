@@ -14,7 +14,7 @@ var (
 	HttpRequestsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_requests_total",
-			Help: "Total number of http requests",
+			Help: "Total number of HTTP requests",
 		},
 		[]string{"method", "path"},
 	)
@@ -23,7 +23,7 @@ var (
 	HttpErrorsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_errors_total",
-			Help: "Total number of http error responses",
+			Help: "Total number of HTTP error responses",
 		},
 		[]string{"method", "path", "status"},
 	)
@@ -31,8 +31,8 @@ var (
 	// Latency
 	HttpDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "http_request_duration_seconds",
-			Help: "HTTP request Latency",
+			Name:    "http_request_duration_seconds",
+			Help:    "HTTP request latency",
 			Buckets: prometheus.DefBuckets,
 		},
 		[]string{"method", "path"},
@@ -52,13 +52,14 @@ func MetricsHandler() http.Handler {
 }
 
 func MetricsMiddleware(next http.Handler) http.Handler {
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		start := time.Now()
 
 		rec := &statusRecorder{
 			ResponseWriter: w,
-			status: http.StatusOK,
+			status:         http.StatusOK,
 		}
 
 		next.ServeHTTP(rec, r)
@@ -71,7 +72,8 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 
 		HttpRequestsTotal.WithLabelValues(method, path).Inc()
 
-		HttpDuration.WithLabelValues(method, path).Observe(duration)
+		HttpDuration.WithLabelValues(method, path).
+			Observe(duration)
 
 		if status >= 400 {
 
