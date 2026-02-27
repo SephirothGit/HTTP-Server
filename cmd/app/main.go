@@ -27,10 +27,13 @@ func main() {
 
 	repo := repository.NewInMemoryOrderRepository()
 	svc := service.NewOrderService(repo)
-	orderHandler := handler.NewOrderHandler(svc)
+	
+	orderHandlerV1 := handler.NewOrderHandler(svc)
+	orderHandlerV2 := handler.NewOrderHandlerV2(svc)
 
 	router := server.NewRouter(server.RouterDeps{
-		OrderHandler: orderHandler,
+		OrderHandlerV1: orderHandlerV1,
+		OrderHandlerV2: orderHandlerV2,
 	})
 	wrapped := server.LoggingMiddleware(server.TimeoutMiddleware(5 * time.Second)(router))
 	wrapped = server.Timeout504Middleware(wrapped)

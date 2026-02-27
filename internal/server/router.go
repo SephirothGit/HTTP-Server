@@ -9,7 +9,8 @@ import (
 )
 
 type RouterDeps struct {
-	OrderHandler http.HandlerFunc
+	OrderHandlerV1 http.HandlerFunc
+	OrderHandlerV2 http.HandlerFunc
 }
 
 func NewRouter(deps RouterDeps) http.Handler {
@@ -33,13 +34,18 @@ func NewRouter(deps RouterDeps) http.Handler {
 
 	// API v1
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Put("/orders/{id}", deps.OrderHandler)
+		r.Put("/orders/{id}", deps.OrderHandlerV1)
+	})
+
+	// API v2
+	r.Route("/api/v2", func(r chi.Router) {
+		r.Put("/orders/{id}/status", deps.OrderHandlerV2)
 	})
 
 	// JWT
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(JWTAuthMiddleware("supersecretkey"))
-		r.Put("/orders/{id}", deps.OrderHandler)
+		r.Put("/orders/{id}", deps.OrderHandlerV1)
 	})
 
 	// Custom error 404
