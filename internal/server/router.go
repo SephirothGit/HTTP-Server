@@ -21,6 +21,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 	r.Use(RequestIDMiddleware)
 	r.Use(LoggingMiddleware)
 	r.Use(RecoveryMiddleware)
+	r.Use(RequestSizeLimitMiddleware(1024 * 1024))
 	r.Use(TimeoutMiddleware(5 * time.Second))
 	r.Use(MetricsMiddleware)
 	r.Use(limiter.Middleware)
