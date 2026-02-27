@@ -13,6 +13,7 @@ Production-style Go backend service implementing order status management with cl
 * Prometheus metrics
 * Rate limiting
 * Timeout handling
+* Request size middleware
 * Custom error responses
 * Health & readiness probes
 * API versioning
