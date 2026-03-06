@@ -10,14 +10,14 @@ func TestChangeStatus(t *testing.T) {
 		name        string
 		from        string
 		to          string
-		expextError error
-		ExpextVer   int
+		expectError error
+		expectVer   int
 	}{
 		{
 			name:        "valid transition created -> paid",
 			from:        StatusCreated,
 			to:          StatusPaid,
-			expectError: ErrInvalidTransition,
+			expectError: nil,
 			expectVer:   1,
 		},
 		{
@@ -38,7 +38,7 @@ func TestChangeStatus(t *testing.T) {
 
 	for _, tt := range tests {
 
-		t.Run(t.Name(), func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 
 			order := &Order{
 				ID:      "123",
@@ -48,14 +48,74 @@ func TestChangeStatus(t *testing.T) {
 
 			err := order.ChangeStatus(tt.to)
 
-			if err != tt.expextError {
-				t.Fatalf("expected error %v got %v", tt.expextError, err)
+			if err != tt.expectError {
+				t.Fatalf("expected error %v got %v", tt.expectError, err)
 			}
 
-			if order.Version != tt.ExpextVer {
-				t.Fatalf("expected version %v got %v", tt.ExpextVer, order.Version)
+			if order.Version != tt.expectVer {
+				t.Fatalf("expected version %v got %v", tt.expectVer, order.Version)
 			}
 		})
 	}
 }
 
+func TestChangeStatus_CreatesEvent(t *testing.T) {
+
+	order := &Order{
+		ID:     "123",
+		Status: StatusCreated,
+	}
+
+	err := order.ChangeStatus(StatusPaid)
+
+	if err != nil {
+		t.Fatalf("unexpected error %v", err)
+	}
+
+	events := order.PullEvents()
+
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event got %v", len(events))
+	}
+
+	event := events[0].(OrderStatusChanged)
+
+	if event.From != StatusCreated {
+		t.Fatalf("expected from created got %s", event.From)
+	}
+
+	if event.To != StatusPaid {
+		t.Fatalf("expected to paid got %s", event.To)
+	}
+}
+
+func TestPullEvents_ClearEvents(t *testing.T) {
+	order := &Order{
+		ID:     "123",
+		Status: StatusCreated,
+	}
+
+	_ = order.ChangeStatus(StatusPaid)
+
+	events := order.PullEvents()
+
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event")
+	}
+
+	events = order.PullEvents()
+
+	if len(events) != 0 {
+		t.Fatalf("expected events to be cleared")
+	}
+}
+
+func TestCanTransition(t *testing.T) {
+	if !CanTransition(StatusCreated, StatusPaid) {
+		t.Fatalf("expected transition to be valid")
+	}
+
+	if CanTransition(StatusCreated, StatusShipped) {
+		t.Fatalf("expected transition to be invalid")
+	}
+}
