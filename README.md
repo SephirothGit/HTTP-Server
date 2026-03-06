@@ -19,6 +19,7 @@ Production-style Go backend service implementing order status management with cl
 * API versioning
 * Optimistic locking (Version field)
 * Domain events
+* Unit tests
 
 ---
 
@@ -77,6 +78,30 @@ http://localhost:8080
 ```
 
 ---
+
+## Tests
+
+Unit tests cover the domain business logic.
+
+Run tests:
+
+```
+go test./
+```
+
+Domain tests verify:
+
+- Status transition rules
+- Idempotent updates
+- Version increment
+- Domain events creation
+- Event clearing behavior
+
+Example:
+
+```
+go test ./internal/domain -v
+```
 
 ## API
 
