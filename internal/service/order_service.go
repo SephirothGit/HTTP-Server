@@ -50,7 +50,7 @@ func (s *orderService) UpdateStatus(
 
 	order, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return domain.ErrOrderNotFound
+		return err
 	}
 
 	// Idempotency
