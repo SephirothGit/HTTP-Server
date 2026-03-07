@@ -83,25 +83,26 @@ http://localhost:8080
 
 Unit tests cover the domain business logic.
 
-Run tests:
-
-```
-go test./
-```
-
-Domain tests verify:
-
-- Status transition rules
-- Idempotent updates
-- Version increment
-- Domain events creation
-- Event clearing behavior
-
-Example:
+### Run domain tests:
 
 ```
 go test ./internal/domain -v
 ```
+
+### Run service tests:
+```
+go test ./internal/service -v
+```
+
+Test coverage includes:
+
+- domain status transition rules
+- idempotent operations
+- version increment
+- domain event creation
+- service layer logic
+- repository interaction via mocks
+- event publishing
 
 ## API
 
